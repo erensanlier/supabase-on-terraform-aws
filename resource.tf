@@ -1,167 +1,3 @@
-resource "aws_iam_policy" "smtp_send_email_policy_cca0_aa9_b" {
-  policy = jsonencode({
-    Statement = [
-      {
-        Action   = "ses:SendRawEmail",
-        Effect   = "Allow",
-        Resource = "*"
-      }
-    ],
-    Version = "2012-10-17"
-  })
-  name = "SmtpSendEmailPolicyCCA0AA9B"
-}
-
-resource "aws_iam_user_policy_attachment" "smtp_send_email_policy_attachment_8_eb_9_c" {
-  policy_arn = aws_iam_policy.smtp_send_email_policy_cca0_aa9_b.arn
-  user       = aws_iam_user.smtp_user4973_df55.name
-}
-
-resource "aws_iam_user" "smtp_user4973_df55" {
-  name = "supabase-smtp-user"
-}
-
-resource "aws_iam_access_key" "smtp_access_key_ccad8_b7_d" {
-  user = aws_iam_user.smtp_user4973_df55.name
-}
-
-resource "aws_iam_role" "smtp_password_function_service_role_a0_a9_c3_a3" {
-  assume_role_policy = jsonencode({
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    join("", ["arn:", data.aws_partition.current.partition, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"])
-  ]
-}
-
-resource "aws_lambda_function" "smtp_password_function_dc49_b7_cc" {
-  function_name = "supabase-smtp-password"
-  s3_bucket     = "supabase-on-aws-${data.aws_region.current.name}"
-  s3_key        = "stable/cbb9c0c24fa0ee781b61f07de9aab9f7fbd9d5fec8eed79f7c53870781adaf38.zip"
-  description   = "Supabase - Generate SMTP Password Function"
-  environment {
-    variables = {
-      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
-    }
-  }
-  handler = "index.handler"
-  role    = aws_iam_role.smtp_password_function_service_role_a0_a9_c3_a3.arn
-  runtime = "nodejs20.x"
-}
-
-resource "aws_iam_role" "jwt_secret_json_web_token_function_service_role17_cf8128" {
-  assume_role_policy = jsonencode({
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    join("", ["arn:", data.aws_partition.current.partition, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"])
-  ]
-  inline_policy {
-    policy = jsonencode({
-      Statement = [
-        {
-          Action = [
-            "secretsmanager:GetSecretValue",
-            "secretsmanager:DescribeSecret"
-          ]
-          Effect   = "Allow"
-          Resource = aws_secretsmanager_secret.jwt_secret_b8834_b39.id
-        }
-      ]
-      Version = "2012-10-17"
-    })
-    name = "JwtSecretJsonWebTokenFunctionServiceRoleDefaultPolicyFEC3E7BA"
-  }
-}
-
-resource "aws_lambda_function" "jwt_secret_json_web_token_function_f8_ba9_d2_a" {
-  function_name = "supabase-jwt-secret-json-web-token"
-  s3_bucket     = "supabase-on-aws-${data.aws_region.current.name}"
-  s3_key        = "stable/baf945a52f8e02b1131009f27d8b23a50b9eacc020ff363093145c8e6f5dbc01.zip"
-  description   = join("", [local.stack_name, " - Generate token via jwt secret"])
-  environment {
-    variables = {
-      JWT_SECRET_ARN                      = aws_secretsmanager_secret.jwt_secret_b8834_b39.id
-      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
-    }
-  }
-  handler = "index.handler"
-  role    = aws_iam_role.jwt_secret_json_web_token_function_service_role17_cf8128.arn
-  runtime = "nodejs20.x"
-}
-
-resource "aws_lambda_invocation" "jwt_secret_anon_key63_f37_a1_e" {
-  function_name = aws_lambda_function.jwt_secret_json_web_token_function_f8_ba9_d2_a.function_name
-
-  input = jsonencode({
-    ResourceProperties = {
-      Payload = {
-        role = "anon"
-      },
-      Issuer    = "supabase",
-      ExpiresIn = "10y"
-    },
-    RequestType = "Create" // No difference between Create and Update
-  })
-
-  depends_on = [
-    aws_lambda_function.jwt_secret_json_web_token_function_f8_ba9_d2_a,
-    aws_secretsmanager_secret.jwt_secret_b8834_b39
-  ]
-}
-
-resource "aws_ssm_parameter" "jwt_secret_anon_key_parameter532_dcc06" {
-  description = join("", [local.stack_name, " - Json Web Token, role: anon"])
-  name        = join("", ["/", local.stack_name, "/JwtSecret/AnonKey"])
-  type        = "String"
-  value       = jsondecode(aws_lambda_invocation.jwt_secret_anon_key63_f37_a1_e.result).Data.Value
-}
-
-resource "aws_lambda_invocation" "jwt_secret_service_role_key_f0_f6_c193" {
-  function_name = aws_lambda_function.jwt_secret_json_web_token_function_f8_ba9_d2_a.function_name
-
-  input = jsonencode({
-    ResourceProperties = {
-      Payload = {
-        role = "service_role"
-      },
-      Issuer    = "supabase",
-      ExpiresIn = "10y"
-    },
-    RequestType = "Create" // No difference between Create and Update
-  })
-
-  depends_on = [
-    aws_lambda_function.jwt_secret_json_web_token_function_f8_ba9_d2_a,
-    aws_secretsmanager_secret.jwt_secret_b8834_b39
-  ]
-}
-
-resource "aws_ssm_parameter" "jwt_secret_service_role_key_parameter_b65536_eb" {
-  description = join("", [local.stack_name, " - Json Web Token, role: service_role"])
-  name        = join("", ["/", local.stack_name, "/JwtSecret/ServiceRoleKey"])
-  type        = "String"
-  value       = jsondecode(aws_lambda_invocation.jwt_secret_service_role_key_f0_f6_c193.result).Data.Value
-}
-
 resource "aws_lb" "load_balancer_be9_eec3_a" {
 
   name               = "SupabaseLoadBalancer630C0AFC"
@@ -189,18 +25,18 @@ resource "aws_vpc_security_group_ingress_rule" "load_balancer_security_groupfrom
 
 resource "aws_vpc_security_group_egress_rule" "load_balancer_security_groupto_supabase_kong_service_security_group_b3_c4_ac8_f800011_c84_c57" {
   description                  = "Load balancer to target"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
   from_port                    = 8000
-  referenced_security_group_id = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
   to_port                      = 8000
 }
 
 resource "aws_vpc_security_group_egress_rule" "load_balancer_security_groupto_supabase_kong_service_security_group_b3_c4_ac8_f8100711401_b1" {
   description                  = "ALB healthcheck"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
   from_port                    = 8100
-  referenced_security_group_id = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
   to_port                      = 8100
 }
@@ -216,50 +52,52 @@ resource "aws_lb_listener" "load_balancer_listener_e1_a099_b9" {
   }
 }
 
+# resource "aws_iam_role" "aws679f53fac002430cb0da5b7982bd2287_service_role_c1_ea0_ff2" {
+#   assume_role_policy = jsonencode({
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "lambda.amazonaws.com"
+#         }
+#       }
+#     ]
+#     Version = "2012-10-17"
+#   })
+#   managed_policy_arns = [
+#     join("", ["arn:", data.aws_partition.current.partition, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"])
+#   ]
+#   inline_policy {
+#     policy = jsonencode({
+#       Statement = [
+#         {
+#           Action   = "ec2:DescribeManagedPrefixLists"
+#           Effect   = "Allow"
+#           Resource = "*"
+#         }
+#       ]
+#       Version = "2012-10-17"
+#     })
+#     name = "CloudFrontPrefixListCustomResourcePolicyB6BABDE5"
+#   }
+# }
+
+# resource "aws_lambda_function" "aws679f53fac002430cb0da5b7982bd22872_d164_c4_c" {
+#   function_name = "supabase-cloud-front-prefix-list"
+#   s3_bucket     = "supabase-on-aws-${data.aws_region.current.name}"
+#   s3_key        = "stable/17c16a3854838fd3ff4bda08146122a6701f33b9c86ae17f415ad0dc47a97544.zip"
+#   handler       = "index.handler"
+#   role          = aws_iam_role.aws679f53fac002430cb0da5b7982bd2287_service_role_c1_ea0_ff2.arn
+#   runtime       = "nodejs18.x"
+#   timeout       = 120
+# }
+
 data "aws_ec2_managed_prefix_list" "cloud_front_prefix_list22014_efd" {
-  name = "com.amazonaws.global.cloudfront.origin-facing"
-}
-
-resource "aws_iam_role" "aws679f53fac002430cb0da5b7982bd2287_service_role_c1_ea0_ff2" {
-  assume_role_policy = jsonencode({
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-    Version = "2012-10-17"
-  })
-  managed_policy_arns = [
-    join("", ["arn:", data.aws_partition.current.partition, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"])
-  ]
-  inline_policy {
-    policy = jsonencode({
-      Statement = [
-        {
-          Action   = "ec2:DescribeManagedPrefixLists"
-          Effect   = "Allow"
-          Resource = "*"
-        }
-      ]
-      Version = "2012-10-17"
-    })
-    name = "CloudFrontPrefixListCustomResourcePolicyB6BABDE5"
+  filter {
+    name = "prefix-list-name"
+    values = ["com.amazonaws.global.cloudfront.origin-facing"]
   }
-}
-
-
-resource "aws_lambda_function" "aws679f53fac002430cb0da5b7982bd22872_d164_c4_c" {
-  function_name = "supabase-cloud-front-prefix-list"
-  s3_bucket     = "supabase-on-aws-${data.aws_region.current.name}"
-  s3_key        = "stable/17c16a3854838fd3ff4bda08146122a6701f33b9c86ae17f415ad0dc47a97544.zip"
-  handler       = "index.handler"
-  role          = aws_iam_role.aws679f53fac002430cb0da5b7982bd2287_service_role_c1_ea0_ff2.arn
-  runtime       = "nodejs18.x"
-  timeout       = 120
 }
 
 resource "aws_cloudfront_cache_policy" "cdn_cache_policy957_d7474" {
@@ -836,18 +674,18 @@ resource "aws_security_group" "kong_service_security_group_e199_ee6_c" {
 resource "aws_vpc_security_group_ingress_rule" "kong_service_security_groupfrom_supabase_load_balancer_security_group_addf6_eb880000_f4_ca2_e4" {
   description                  = "Load balancer to target"
   from_port                    = 8000
-  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  referenced_security_group_id = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
+  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
   to_port                      = 8000
 }
 
 resource "aws_vpc_security_group_ingress_rule" "kong_service_security_groupfrom_supabase_load_balancer_security_group_addf6_eb881008_d65_c13_d" {
   description                  = "ALB healthcheck"
   from_port                    = 8100
-  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  referenced_security_group_id = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.load_balancer_security_group_a28_d6_dd7.id
+  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
   to_port                      = 8100
 }
 
@@ -1348,9 +1186,9 @@ resource "aws_security_group" "auth_service_security_group6440464_f" {
 resource "aws_vpc_security_group_ingress_rule" "auth_service_security_groupfrom_supabase_kong_service_security_group_b3_c4_ac8_f99999367_c437" {
   description                  = "from SupabaseKongServiceSecurityGroupB3C4AC8F:9999"
   from_port                    = 9999
-  referenced_security_group_id = aws_security_group.auth_service_security_group6440464_f.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.auth_service_security_group6440464_f.id
   to_port                      = 9999
 }
 
@@ -1650,27 +1488,27 @@ resource "aws_security_group" "rest_service_security_group0_baea949" {
 resource "aws_vpc_security_group_ingress_rule" "rest_service_security_groupfrom_supabase_kong_service_security_group_b3_c4_ac8_f300032126_e75" {
   description                  = "from SupabaseKongServiceSecurityGroupB3C4AC8F:3000"
   from_port                    = 3000
-  referenced_security_group_id = aws_security_group.rest_service_security_group0_baea949.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.rest_service_security_group0_baea949.id
   to_port                      = 3000
 }
 
 resource "aws_vpc_security_group_ingress_rule" "rest_service_security_groupfrom_supabase_auth_service_security_group_c0652_d2330004_e9_de7_f5" {
   description                  = "from SupabaseAuthServiceSecurityGroupC0652D23:3000"
   from_port                    = 3000
-  referenced_security_group_id = aws_security_group.rest_service_security_group0_baea949.id
+  referenced_security_group_id = aws_security_group.auth_service_security_group6440464_f.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.auth_service_security_group6440464_f.id
+  security_group_id            = aws_security_group.rest_service_security_group0_baea949.id
   to_port                      = 3000
 }
 
 resource "aws_vpc_security_group_ingress_rule" "rest_service_security_groupfrom_supabase_storage_service_security_group_adf822_d430009563_cf9_c" {
   description                  = "from SupabaseStorageServiceSecurityGroupADF822D4:3000"
   from_port                    = 3000
-  referenced_security_group_id = aws_security_group.rest_service_security_group0_baea949.id
+  referenced_security_group_id = aws_security_group.storage_service_security_group_f6280_dc0.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.storage_service_security_group_f6280_dc0.id
+  security_group_id            = aws_security_group.rest_service_security_group0_baea949.id
   to_port                      = 3000
 }
 
@@ -1983,9 +1821,9 @@ resource "aws_vpc_security_group_ingress_rule" "realtime_service_security_groupf
 resource "aws_vpc_security_group_ingress_rule" "realtime_service_security_groupfrom_supabase_kong_service_security_group_b3_c4_ac8_f40007_d995_f01" {
   description                  = "from SupabaseKongServiceSecurityGroupB3C4AC8F:4000"
   from_port                    = 4000
-  referenced_security_group_id = aws_security_group.realtime_service_security_group8_e245_e7_e.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.realtime_service_security_group8_e245_e7_e.id
   to_port                      = 4000
 }
 
@@ -2244,9 +2082,9 @@ resource "aws_security_group" "imgproxy_service_security_group_dd73_de99" {
 resource "aws_vpc_security_group_ingress_rule" "imgproxy_service_security_groupfrom_supabase_storage_service_security_group_adf822_d450011_e6_fa973" {
   description                  = "from SupabaseStorageServiceSecurityGroupADF822D4:5001"
   from_port                    = 5001
-  referenced_security_group_id = aws_security_group.imgproxy_service_security_group_dd73_de99.id
+  referenced_security_group_id = aws_security_group.storage_service_security_group_f6280_dc0.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.storage_service_security_group_f6280_dc0.id
+  security_group_id            = aws_security_group.imgproxy_service_security_group_dd73_de99.id
   to_port                      = 5001
 }
 
@@ -2612,9 +2450,9 @@ resource "aws_security_group" "storage_service_security_group_f6280_dc0" {
 resource "aws_vpc_security_group_ingress_rule" "storage_service_security_groupfrom_supabase_kong_service_security_group_b3_c4_ac8_f50000996_d63_b" {
   description                  = "from SupabaseKongServiceSecurityGroupB3C4AC8F:5000"
   from_port                    = 5000
-  referenced_security_group_id = aws_security_group.storage_service_security_group_f6280_dc0.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.storage_service_security_group_f6280_dc0.id
   to_port                      = 5000
 }
 
@@ -2861,9 +2699,9 @@ resource "aws_security_group" "meta_service_security_group0_e39_df35" {
 resource "aws_vpc_security_group_ingress_rule" "meta_service_security_groupfrom_supabase_kong_service_security_group_b3_c4_ac8_f80805_ad2_c559" {
   description                  = "from SupabaseKongServiceSecurityGroupB3C4AC8F:8080"
   from_port                    = 8080
-  referenced_security_group_id = aws_security_group.meta_service_security_group0_e39_df35.id
+  referenced_security_group_id = aws_security_group.kong_service_security_group_e199_ee6_c.id
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.kong_service_security_group_e199_ee6_c.id
+  security_group_id            = aws_security_group.meta_service_security_group0_e39_df35.id
   to_port                      = 8080
 }
 
