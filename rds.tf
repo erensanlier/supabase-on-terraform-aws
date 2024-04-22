@@ -119,7 +119,6 @@ resource "aws_rds_cluster" "database_cluster5_b53_a178" {
   master_username                 = "supabase_admin"
   master_password                 = random_password.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.result
   port                            = 5432
-  enable_http_endpoint            = true
   serverlessv2_scaling_configuration {
     max_capacity = var.max_acu
     min_capacity = var.min_acu

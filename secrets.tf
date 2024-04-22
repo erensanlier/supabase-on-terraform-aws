@@ -31,8 +31,8 @@ resource "aws_secretsmanager_secret_version" "supabase_database_cluster_secret2_
 # DB User: supabase_auth_admin
 resource "random_password" "databasesupabaseauthadmin_f9154_f88" {
   length           = 30
-  special          = true # Adjust based on your needs
-  override_special = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+  special          = true
+  override_special = "-_=^"
 }
 
 resource "aws_secretsmanager_secret" "databasesupabaseauthadmin_f9154_f88" {
@@ -57,7 +57,7 @@ resource "aws_secretsmanager_secret_version" "databasesupabaseauthadmin_f9154_f8
 resource "random_password" "databasesupabasestorageadmin_secret88_c76_aa3" {
   length           = 30
   special          = true
-  override_special = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+  override_special = "-_=^"
 }
 
 resource "aws_secretsmanager_secret" "databasesupabasestorageadmin_secret88_c76_aa3" {
@@ -82,8 +82,7 @@ resource "aws_secretsmanager_secret_version" "databasesupabasestorageadmin_secre
 resource "random_password" "databaseauthenticator_secret69_fa14_de" {
   length           = 30
   special          = true
-  override_special = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
-  min_special      = 0
+  override_special = "-_=^"
 }
 
 resource "aws_secretsmanager_secret" "databaseauthenticator_secret69_fa14_de" {
@@ -108,8 +107,7 @@ resource "aws_secretsmanager_secret_version" "databaseauthenticator_secret69_fa1
 resource "random_password" "databasedashboarduser_secret102_d2_f3_b" {
   length           = 30
   special          = true
-  override_special = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
-  min_special      = 0
+  override_special = "-_=^"
 }
 
 resource "aws_secretsmanager_secret" "databasedashboarduser_secret102_d2_f3_b" {
@@ -134,7 +132,7 @@ resource "aws_secretsmanager_secret_version" "databasedashboarduser_secret102_d2
 resource "random_password" "databasepostgres_secret8_e64_af98" {
   length           = 30
   special          = true
-  override_special = " %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+  override_special = "-_=^"
 }
 
 resource "aws_secretsmanager_secret" "databasepostgres_secret8_e64_af98" {

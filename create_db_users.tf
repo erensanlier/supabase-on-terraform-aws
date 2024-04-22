@@ -114,4 +114,13 @@ resource "aws_lambda_invocation" "database_user_password_function_8_eb9_c" {
     aws_secretsmanager_secret_version.databasedashboarduser_secret102_d2_f3_b,
     aws_secretsmanager_secret_version.databasepostgres_secret8_e64_af98
   ]
+  lifecycle {
+    replace_triggered_by = [ 
+        aws_secretsmanager_secret_version.databasesupabaseauthadmin_f9154_f88,
+        aws_secretsmanager_secret_version.databasesupabasestorageadmin_secret88_c76_aa3,
+        aws_secretsmanager_secret_version.databaseauthenticator_secret69_fa14_de,
+        aws_secretsmanager_secret_version.databasedashboarduser_secret102_d2_f3_b,
+        aws_secretsmanager_secret_version.databasepostgres_secret8_e64_af98
+     ]
+  }
 }
