@@ -488,7 +488,7 @@ resource "aws_lambda_function" "cdn_cache_manager_api_function8_f3_cc846" {
   environment {
     variables = {
       QUEUE_URL                           = aws_sqs_queue.cdn_cache_manager_queue786_d7_fa2.id
-      API_KEY                             = aws_secretsmanager_secret_version.cdn_cache_manager_api_key137_d2795.secret_string
+      API_KEY                             = "${aws_secretsmanager_secret.cdn_cache_manager_api_key137_d2795.id}:apiKey"
       AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
     }
   }
@@ -706,7 +706,7 @@ resource "aws_ecs_task_definition" "kong_task_def115_e456_d" {
   ])
   cpu                = local.mappings["TaskSize"][var.kong_task_size93_c195_e9]["cpu"]
   execution_role_arn = aws_iam_role.kong_task_def_execution_role349_e43_dd.arn
-  family             = "SupabaseKongTaskDef151136E7"
+  family             = "SupabaseKongTaskDef"
   memory             = local.mappings["TaskSize"][var.kong_task_size93_c195_e9]["memory"]
   network_mode       = "awsvpc"
   requires_compatibilities = [
@@ -1114,11 +1114,11 @@ resource "aws_ecs_task_definition" "auth_task_def5_fb652_ed" {
         },
         {
           Name      = "GOTRUE_SMTP_USER"
-          ValueFrom = "${aws_secretsmanager_secret_version.smtp_secret_f89_cc16_b.id}:username::"
+          ValueFrom = "${aws_secretsmanager_secret.smtp_secret_f89_cc16_b.id}:username::"
         },
         {
           Name      = "GOTRUE_SMTP_PASS"
-          ValueFrom = "${aws_secretsmanager_secret_version.smtp_secret_f89_cc16_b.id}:password::"
+          ValueFrom = "${aws_secretsmanager_secret.smtp_secret_f89_cc16_b.id}:password::"
         },
         {
           Name      = join("", ["GOTRUE_EXTERNAL_", local.AuthProvider1Enabled983DA6B5 ? var.auth_provider1_name740_dd3_f6 : "PROVIDER1", "_CLIENT_ID"])
@@ -1156,7 +1156,7 @@ resource "aws_ecs_task_definition" "auth_task_def5_fb652_ed" {
   ])
   cpu                = local.mappings["TaskSize"][var.auth_task_size9895_c206]["cpu"]
   execution_role_arn = aws_iam_role.auth_task_def_execution_role071231_b5.arn
-  family             = "SupabaseAuthTaskDef66536EFB"
+  family             = "SupabaseAuthTaskDef"
   memory             = local.mappings["TaskSize"][var.auth_task_size9895_c206]["memory"]
   network_mode       = "awsvpc"
   requires_compatibilities = [
@@ -1169,6 +1169,9 @@ resource "aws_ecs_task_definition" "auth_task_def5_fb652_ed" {
   task_role_arn = aws_iam_role.auth_task_def_task_role8_ce224_af.arn
 
   depends_on = [aws_lambda_invocation.database_user_password_function_8_eb9_c]
+  lifecycle {
+    replace_triggered_by = [ aws_lambda_invocation.database_user_password_function_8_eb9_c ]
+  }
 }
 
 resource "aws_iam_role" "auth_task_def_execution_role071231_b5" {
@@ -1193,7 +1196,7 @@ resource "aws_iam_role" "auth_task_def_execution_role071231_b5" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.auth_logs940_c0551.arn
+          Resource = "${aws_cloudwatch_log_group.auth_logs940_c0551.arn}:*"
         },
         {
           Action = [
@@ -1525,7 +1528,7 @@ resource "aws_ecs_task_definition" "rest_task_def716_bd951" {
   ])
   cpu                = local.mappings["TaskSize"][var.rest_task_size14_e11_a14]["cpu"]
   execution_role_arn = aws_iam_role.rest_task_def_execution_role8_e4_c9_f62.arn
-  family             = "SupabaseRestTaskDef0C1A5ADE"
+  family             = "SupabaseRestTaskDef"
   memory             = local.mappings["TaskSize"][var.rest_task_size14_e11_a14]["memory"]
   network_mode       = "awsvpc"
   requires_compatibilities = [
@@ -1536,6 +1539,10 @@ resource "aws_ecs_task_definition" "rest_task_def716_bd951" {
     operating_system_family = "LINUX"
   }
   task_role_arn = aws_iam_role.rest_task_def_task_role59_e8_d431.arn
+
+  lifecycle {
+    replace_triggered_by = [ aws_lambda_invocation.database_user_password_function_8_eb9_c ]
+  }
 }
 
 resource "aws_iam_role" "rest_task_def_execution_role8_e4_c9_f62" {
@@ -1560,7 +1567,7 @@ resource "aws_iam_role" "rest_task_def_execution_role8_e4_c9_f62" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.rest_logs_e8_b49088.arn
+          Resource = "${aws_cloudwatch_log_group.rest_logs_e8_b49088.arn}:*"
         },
         {
           Action = [
@@ -1812,15 +1819,15 @@ resource "aws_ecs_task_definition" "realtime_task_def9_e0_dd838" {
       Secrets = [
         {
           Name      = "DB_USER"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:username::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:username::"
         },
         {
           Name      = "DB_PASSWORD"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:password::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:password::"
         },
         {
           Name      = "DB_NAME"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:dbname::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:dbname::"
         },
         {
           Name      = "API_JWT_SECRET"
@@ -1828,7 +1835,7 @@ resource "aws_ecs_task_definition" "realtime_task_def9_e0_dd838" {
         },
         {
           Name      = "SECRET_KEY_BASE"
-          ValueFrom = aws_secretsmanager_secret_version.cdn_cache_manager_api_key137_d2795.id
+          ValueFrom = aws_secretsmanager_secret.cookie_signing_secret_e5797145.id
         }
       ]
       Ulimits = [
@@ -1877,7 +1884,7 @@ resource "aws_iam_role" "realtime_task_def_execution_role578_aa7_f5" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.realtime_logs5_c43159_d.arn
+          Resource = "${aws_cloudwatch_log_group.realtime_logs5_c43159_d.arn}:*"
         },
         {
           Action = [
@@ -2169,7 +2176,7 @@ resource "aws_iam_role" "imgproxy_task_def_execution_role_e676_fd35" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.imgproxy_logs00_a67_bbb.arn
+          Resource = "${aws_cloudwatch_log_group.imgproxy_logs00_a67_bbb.arn}:*"
         }
       ]
       Version = "2012-10-17"
@@ -2441,7 +2448,7 @@ resource "aws_ecs_task_definition" "storage_task_def36011_ffa" {
         },
         {
           Name      = "WEBHOOK_API_KEY"
-          ValueFrom = aws_secretsmanager_secret_version.cdn_cache_manager_api_key137_d2795.id
+          ValueFrom = aws_secretsmanager_secret.cdn_cache_manager_api_key137_d2795.id
         }
       ]
       Ulimits = [
@@ -2455,7 +2462,7 @@ resource "aws_ecs_task_definition" "storage_task_def36011_ffa" {
   ])
   cpu                = local.mappings["TaskSize"][var.storage_task_size_b82_d9_cfb]["cpu"]
   execution_role_arn = aws_iam_role.storage_task_def_execution_role_a2_ef27_e4.arn
-  family             = "SupabaseStorageTaskDef9FD687B2"
+  family             = "SupabaseStorageTaskDef"
   memory             = local.mappings["TaskSize"][var.storage_task_size_b82_d9_cfb]["memory"]
   network_mode       = "awsvpc"
   requires_compatibilities = [
@@ -2466,6 +2473,9 @@ resource "aws_ecs_task_definition" "storage_task_def36011_ffa" {
     operating_system_family = "LINUX"
   }
   task_role_arn = aws_iam_role.storage_task_def_task_role_fb709706.arn
+  lifecycle {
+    replace_triggered_by = [ aws_lambda_invocation.database_user_password_function_8_eb9_c ]
+  }
 }
 
 resource "aws_iam_role" "storage_task_def_execution_role_a2_ef27_e4" {
@@ -2490,7 +2500,7 @@ resource "aws_iam_role" "storage_task_def_execution_role_a2_ef27_e4" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.storage_logs2_a2_d4_d26.arn
+          Resource = "${aws_cloudwatch_log_group.storage_logs2_a2_d4_d26.arn}:*"
         },
         {
           Action = [
@@ -2714,15 +2724,15 @@ resource "aws_ecs_task_definition" "meta_task_def2_c490_dd3" {
       Secrets = [
         {
           Name      = "PG_META_DB_NAME"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:dbname::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:dbname::"
         },
         {
           Name      = "PG_META_DB_USER"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:username::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:username::"
         },
         {
           Name      = "PG_META_DB_PASSWORD"
-          ValueFrom = "${aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:password::"
+          ValueFrom = "${aws_secretsmanager_secret.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.id}:password::"
         }
       ]
       Ulimits = [
@@ -2771,7 +2781,7 @@ resource "aws_iam_role" "meta_task_def_execution_role959286_b6" {
             "logs:PutLogEvents"
           ]
           Effect   = "Allow"
-          Resource = aws_cloudwatch_log_group.meta_logs80_fd71_c7.arn
+          Resource = "${aws_cloudwatch_log_group.meta_logs80_fd71_c7.arn}:*"
         },
         {
           Action = [
