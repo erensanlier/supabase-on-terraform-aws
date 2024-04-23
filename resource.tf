@@ -1470,6 +1470,8 @@ resource "aws_ecs_service" "rest_service8812_c0_b2" {
     registry_arn   = aws_service_discovery_service.rest_service_cloudmap_service_a978698_c.arn
   }
   task_definition = aws_ecs_task_definition.rest_task_def716_bd951.arn
+
+  depends_on = [ aws_lambda_invocation.database_migration993_f5_b9_c ]
 }
 
 resource "aws_security_group" "rest_service_security_group0_baea949" {
@@ -2676,6 +2678,8 @@ resource "aws_ecs_service" "meta_service2_be3_a4_cf" {
     registry_arn   = aws_service_discovery_service.meta_service_cloudmap_service638956_cc.arn
   }
   task_definition = aws_ecs_task_definition.meta_task_def2_c490_dd3.arn
+
+  depends_on = [ aws_lambda_invocation.database_migration993_f5_b9_c ]
 }
 
 resource "aws_security_group" "meta_service_security_group0_e39_df35" {

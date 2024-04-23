@@ -119,6 +119,8 @@ resource "aws_rds_cluster" "database_cluster5_b53_a178" {
   master_username                 = "supabase_admin"
   master_password                 = random_password.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb.result
   port                            = 5432
+  skip_final_snapshot             = true
+  final_snapshot_identifier = "supabase-database-cluster-final-snapshot"
   serverlessv2_scaling_configuration {
     max_capacity = var.max_acu
     min_capacity = var.min_acu
@@ -135,6 +137,7 @@ resource "aws_rds_cluster_instance" "database_cluster_instance1_e154_d1_e9" {
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.database_cluster5_b53_a178.engine
   engine_version     = aws_rds_cluster.database_cluster5_b53_a178.engine_version
+  
 }
 
 data "aws_rds_engine_version" "postgresql" {

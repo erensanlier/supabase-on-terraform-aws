@@ -106,6 +106,7 @@ resource "aws_lambda_invocation" "database_user_password_function_8_eb9_c" {
   })
   depends_on = [
     aws_lambda_function.database_user_password_function_afac7436,
+    aws_rds_cluster_instance.database_cluster_instance1_e154_d1_e9,
     aws_lambda_invocation.database_migration993_f5_b9_c,
     aws_secretsmanager_secret_version.supabase_database_cluster_secret2_aa4_a5_cd3fdaad7efa858a3daf9490cf0a702aeb,
     aws_secretsmanager_secret_version.databasesupabaseauthadmin_f9154_f88,
