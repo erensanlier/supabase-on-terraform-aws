@@ -89,7 +89,7 @@ variable "web_acl_arn" {
 variable "min_acu" {
   description = "The minimum number of Aurora capacity units (ACU) for a DB instance in an Aurora Serverless v2 cluster."
   type        = string
-  default     = 2
+  default     = 0.5
 }
 
 variable "max_acu" {

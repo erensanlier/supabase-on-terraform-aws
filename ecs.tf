@@ -16,8 +16,6 @@ resource "aws_ecs_cluster" "cluster_eb0386_a7" {
   service_connect_defaults {
     namespace = aws_service_discovery_private_dns_namespace.cluster_default_service_discovery_namespace_c336_f9_b4.arn
   }
-
-  
 }
 
 resource "aws_ecs_cluster_capacity_providers" "cluster3_da9_ccba" {

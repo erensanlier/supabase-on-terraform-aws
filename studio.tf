@@ -19,30 +19,24 @@ resource "aws_iam_role" "studio_repository_import_function_service_role_c6_b8_ed
   managed_policy_arns = [
     join("", ["arn:", data.aws_partition.current.partition, ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"])
   ]
-}
-
-resource "aws_iam_policy" "studio_repository_import_function_service_role_default_policy_a3265637" {
-  policy = jsonencode({
-    Statement = [
-      {
-        Action   = "codecommit:GitPull"
-        Effect   = "Allow"
-        Resource = aws_codecommit_repository.studio_repository_e0_effbe2.arn
-      },
-      {
-        Action   = "codecommit:GitPush"
-        Effect   = "Allow"
-        Resource = aws_codecommit_repository.studio_repository_e0_effbe2.arn
-      }
-    ]
-    Version = "2012-10-17"
-  })
-  name = "StudioRepositoryImportFunctionServiceRoleDefaultPolicyA3265637"
-}
-
-resource "aws_iam_role_policy_attachment" "studio_repository_import_function_service_role_default_policy_attachmentc6_b8_ed58" {
-  policy_arn = aws_iam_policy.studio_repository_import_function_service_role_default_policy_a3265637.arn
-  role       = aws_iam_role.studio_repository_import_function_service_role_c6_b8_ed58.name
+  inline_policy {
+    policy = jsonencode({
+      Statement = [
+        {
+          Action   = "codecommit:GitPull"
+          Effect   = "Allow"
+          Resource = aws_codecommit_repository.studio_repository_e0_effbe2.arn
+        },
+        {
+          Action   = "codecommit:GitPush"
+          Effect   = "Allow"
+          Resource = aws_codecommit_repository.studio_repository_e0_effbe2.arn
+        }
+      ]
+      Version = "2012-10-17"
+    })
+    name = "StudioRepositoryImportFunctionServiceRoleDefaultPolicyA3265637"
+  }
 }
 
 resource "aws_lambda_function" "studio_repository_import_function_f87_c7_d62" {
@@ -154,9 +148,7 @@ resource "aws_iam_role_policy_attachment" "studio_role_default_policy_attachment
 
 resource "aws_amplify_app" "studio_app_e10_a3450" {
   name = "SupabaseStudio"
-  auto_branch_creation_config {
-    enable_basic_auth = false
-  }
+
   build_spec = join("", [
     <<EOT
       version: 1
@@ -265,5 +257,5 @@ resource "aws_iam_policy" "studio_amplify_ssr_logging_policy_b3151918" {
 
 resource "aws_iam_role_policy_attachment" "studio_amplify_ssr_logging_policy_attachmentb3151918" {
   policy_arn = aws_iam_policy.studio_amplify_ssr_logging_policy_b3151918.arn
-  role = aws_iam_role.studio_role199_eaf11.name
+  role       = aws_iam_role.studio_role199_eaf11.name
 }
